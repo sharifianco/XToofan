@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Tweet It</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .admin-container {
+      max-width: 900px;
+    }
+
+    .login-form {
+      max-width: 400px;
+      margin: 100px auto;
+    }
+
+    .login-form input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #38444d;
+      border-radius: 8px;
+      background: #192734;
+      color: #e7e9ea;
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
+
+    .login-form input:focus {
+      outline: none;
+      border-color: #1d9bf0;
+    }
+
+    .form-section {
+      background: #192734;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid #38444d;
+    }
+
+    .form-section h3 {
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #8b98a5;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #38444d;
+      border-radius: 8px;
+      background: #15202b;
+      color: #e7e9ea;
+      font-size: 16px;
+      font-family: inherit;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #1d9bf0;
+    }
+
+    .char-counter {
+      text-align: right;
+      font-size: 13px;
+      color: #8b98a5;
+      margin-top: 4px;
+    }
+
+    .char-counter.warning {
+      color: #f4212e;
+    }
+
+    .tweet-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .admin-tweet-card {
+      background: #192734;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #38444d;
+    }
+
+    .admin-tweet-card.inactive {
+      opacity: 0.6;
+    }
+
+    .tweet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .tweet-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-badge.active {
+      background: #00ba7c;
+      color: white;
+    }
+
+    .status-badge.inactive {
+      background: #536471;
+      color: white;
+    }
+
+    .tweet-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+
+    .btn-danger {
+      background: #f4212e;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #dc1e28;
+    }
+
+    .btn-warning {
+      background: #ffd400;
+      color: #15202b;
+    }
+
+    .btn-warning:hover {
+      background: #e6bf00;
+    }
+
+    .tweet-text {
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .tweet-comment-url {
+      font-size: 13px;
+      color: #1d9bf0;
+      word-break: break-all;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #192734;
+      border-radius: 16px;
+      padding: 24px;
+      width: 90%;
+      max-width: 500px;
+      border: 1px solid #38444d;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: #8b98a5;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container admin-container">
+    <!-- Login Form -->
+    <div id="login-section" class="login-form">
+      <div class="form-section">
+        <h2>Admin Login</h2>
+        <form id="login-form">
+          <input type="password" id="password" placeholder="Enter admin password" required>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+        </form>
+        <div id="login-error" class="error" style="margin-top: 16px;"></div>
+      </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="admin-section" class="hidden">
+      <header>
+        <div class="header-content">
+          <h1>Admin Panel</h1>
+          <a href="/admin/logout" class="btn btn-secondary">Logout</a>
+        </div>
+      </header>
+
+      <!-- Add Tweet Form -->
+      <div class="form-section">
+        <h3>Add New Tweet</h3>
+        <form id="add-tweet-form">
+          <div class="form-group">
+            <label for="tweet-text">Tweet Text *</label>
+            <textarea id="tweet-text" placeholder="What's happening?" maxlength="280" required></textarea>
+            <div id="char-counter" class="char-counter">0/280</div>
+          </div>
+          <div class="form-group">
+            <label for="tweet-category">Category (optional)</label>
+            <input type="text" id="tweet-category" placeholder="e.g., motivation, tech, greeting">
+          </div>
+          <div class="form-group">
+            <label for="comment-url">Reply to Tweet URL (optional)</label>
+            <input type="text" id="comment-url" placeholder="https://x.com/user/status/1234567890">
+            <small style="color: #8b98a5;">If set, this will be posted as a reply/comment to the specified tweet</small>
+          </div>
+          <button type="submit" class="btn btn-primary">Add Tweet</button>
+        </form>
+      </div>
+
+      <!-- Tweet List -->
+      <div class="form-section">
+        <h3>Manage Tweets</h3>
+        <div id="tweet-list" class="tweet-list">
+          <p class="loading">Loading tweets...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Edit Tweet</h3>
+          <button class="modal-close" onclick="closeEditModal()">&times;</button>
+        </div>
+        <form id="edit-tweet-form">
+          <input type="hidden" id="edit-tweet-id">
+          <div class="form-group">
+            <label for="edit-tweet-text">Tweet Text *</label>
+            <textarea id="edit-tweet-text" maxlength="280" required></textarea>
+            <div id="edit-char-counter" class="char-counter">0/280</div>
+          </div>
+          <div class="form-group">
+            <label for="edit-tweet-category">Category</label>
+            <input type="text" id="edit-tweet-category">
+          </div>
+          <div class="form-group">
+            <label for="edit-comment-url">Reply to Tweet URL</label>
+            <input type="text" id="edit-comment-url">
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

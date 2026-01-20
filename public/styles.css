@@ -1,0 +1,283 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Tahoma', sans-serif;
+  background: #15202b;
+  color: #e7e9ea;
+  min-height: 100vh;
+}
+
+/* RTL Support */
+[dir="rtl"] .tweet-card .char-count {
+  text-align: left;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Login Page */
+.login-card {
+  background: #192734;
+  border-radius: 16px;
+  padding: 48px;
+  text-align: center;
+  margin-top: 100px;
+}
+
+.login-card h1 {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.login-card p {
+  color: #8b98a5;
+  margin-bottom: 32px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 9999px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s;
+}
+
+.btn-primary {
+  background: #e7e9ea;
+  color: #15202b;
+}
+
+.btn-primary:hover {
+  background: #d7d9db;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #e7e9ea;
+  border: 1px solid #536471;
+}
+
+.btn-secondary:hover {
+  background: rgba(239, 243, 244, 0.1);
+}
+
+.btn-post {
+  background: #1d9bf0;
+  color: white;
+  width: 100%;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.btn-post:hover {
+  background: #1a8cd8;
+}
+
+.btn-post:disabled {
+  background: #536471;
+  cursor: not-allowed;
+}
+
+/* Header */
+header {
+  border-bottom: 1px solid #38444d;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.header-content {
+  text-align: center;
+}
+
+.header-content h1 {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  color: #8b98a5;
+  font-size: 14px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+#username {
+  color: #8b98a5;
+}
+
+/* Main content */
+main h2 {
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+/* Tweets Grid */
+.tweets-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.tweet-card {
+  background: #192734;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid #38444d;
+}
+
+.tweet-badges {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tweet-card .category {
+  display: inline-block;
+  background: #1d9bf0;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+}
+
+.tweet-card .reply-badge {
+  background: #7856ff;
+}
+
+.tweet-card .text {
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.tweet-card .char-count {
+  color: #8b98a5;
+  font-size: 13px;
+}
+
+/* Loading & Error states */
+.loading {
+  text-align: center;
+  color: #8b98a5;
+  padding: 40px;
+}
+
+.error {
+  color: #f4212e;
+  margin-top: 16px;
+}
+
+.empty-state {
+  text-align: center;
+  color: #8b98a5;
+  padding: 60px 20px;
+}
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 1000;
+}
+
+.toast.show {
+  opacity: 1;
+}
+
+.toast.success {
+  background: #00ba7c;
+  color: white;
+}
+
+.toast.error {
+  background: #f4212e;
+  color: white;
+}
+
+/* Reply Preview */
+.reply-preview {
+  background: #15202b;
+  border: 1px solid #38444d;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.reply-preview .loading-text {
+  color: #8b98a5;
+  font-size: 13px;
+}
+
+.reply-preview .error-text {
+  color: #f4212e;
+  font-size: 13px;
+}
+
+.reply-preview .reply-link {
+  color: #1d9bf0;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.reply-preview .reply-link:hover {
+  text-decoration: underline;
+}
+
+.original-tweet {
+  font-size: 14px;
+}
+
+.original-tweet-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.original-tweet-header .replying-to {
+  color: #8b98a5;
+  font-size: 13px;
+}
+
+.original-tweet-header .author-link {
+  color: #1d9bf0;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.original-tweet-header .author-link:hover {
+  text-decoration: underline;
+}
+
+.original-tweet-text {
+  color: #8b98a5;
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
