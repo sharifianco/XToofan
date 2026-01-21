@@ -1,3 +1,22 @@
+/* IranSans Font */
+@font-face {
+  font-family: 'IRANSans';
+  src: url('https://cdn.jsdelivr.net/gh/perian-ir/iran-sans@latest/woff2/IRANSansWeb.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/gh/perian-ir/iran-sans@latest/woff/IRANSansWeb.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IRANSans';
+  src: url('https://cdn.jsdelivr.net/gh/perian-ir/iran-sans@latest/woff2/IRANSansWeb_Bold.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/gh/perian-ir/iran-sans@latest/woff/IRANSansWeb_Bold.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -5,7 +24,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Tahoma', sans-serif;
+  font-family: 'IRANSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Tahoma', sans-serif;
   background: #15202b;
   color: #e7e9ea;
   min-height: 100vh;

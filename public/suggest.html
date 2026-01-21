@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>پیشنهاد توییت - توفان توییتری</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <style>
     .suggest-container {
       max-width: 600px;
@@ -75,6 +76,14 @@
     .success-message.hidden {
       display: none;
     }
+    .turnstile-wrapper {
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .cf-turnstile {
+      margin: 0 auto;
+    }
   </style>
 </head>
 <body>
@@ -105,7 +114,11 @@
             <label for="submitter-name">نام شما (اختیاری)</label>
             <input type="text" id="submitter-name" placeholder="نام یا نام کاربری شما">
           </div>
-          <button type="submit" class="btn btn-primary" style="width: 100%;">ارسال پیشنهاد</button>
+          <!-- Cloudflare Turnstile -->
+          <div class="turnstile-wrapper">
+            <div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITE_KEY" data-theme="dark" data-callback="onTurnstileSuccess"></div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="submit-btn" style="width: 100%;" disabled>ارسال پیشنهاد</button>
         </form>
         <div id="success-message" class="success-message hidden">
           پیشنهاد شما با موفقیت ارسال شد! پس از بررسی توسط ادمین منتشر خواهد شد.
@@ -117,6 +130,14 @@
   </div>
 
   <script>
+    let turnstileToken = null;
+
+    // Turnstile callback
+    function onTurnstileSuccess(token) {
+      turnstileToken = token;
+      document.getElementById('submit-btn').disabled = false;
+    }
+
     // Character counter
     const textarea = document.getElementById('suggest-text');
     const counter = document.getElementById('char-counter');
@@ -131,6 +152,11 @@
     document.getElementById('suggest-form').addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      if (!turnstileToken) {
+        showToast('لطفا تایید کنید که ربات نیستید', 'error');
+        return;
+      }
+
       const text = document.getElementById('suggest-text').value.trim();
       const reply_url = document.getElementById('reply-url').value.trim();
       const submitter_name = document.getElementById('submitter-name').value.trim();
@@ -142,7 +168,8 @@
           body: JSON.stringify({
             text,
             reply_url: reply_url || null,
-            submitter_name: submitter_name || null
+            submitter_name: submitter_name || null,
+            turnstile_token: turnstileToken
           })
         });
 
@@ -150,12 +177,20 @@
           document.getElementById('suggest-form').reset();
           counter.textContent = '0/280';
           document.getElementById('success-message').classList.remove('hidden');
+          // Reset Turnstile
+          turnstile.reset();
+          turnstileToken = null;
+          document.getElementById('submit-btn').disabled = true;
           setTimeout(() => {
             document.getElementById('success-message').classList.add('hidden');
           }, 5000);
         } else {
           const data = await res.json();
           showToast(data.error || 'خطا در ارسال پیشنهاد', 'error');
+          // Reset Turnstile on error
+          turnstile.reset();
+          turnstileToken = null;
+          document.getElementById('submit-btn').disabled = true;
         }
       } catch (error) {
         showToast('خطا در ارسال پیشنهاد', 'error');

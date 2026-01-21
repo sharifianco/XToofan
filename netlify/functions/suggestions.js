@@ -7,6 +7,26 @@ const supabase = createClient(
 );
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY;
+
+async function verifyTurnstile(token) {
+  if (!TURNSTILE_SECRET) {
+    // Skip verification if no secret key configured
+    return true;
+  }
+
+  try {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `secret=${TURNSTILE_SECRET}&response=${token}`
+    });
+    const data = await response.json();
+    return data.success;
+  } catch {
+    return false;
+  }
+}
 
 function verifyToken(event) {
   const authHeader = event.headers.authorization || event.headers.Authorization;
@@ -36,7 +56,19 @@ exports.handler = async (event, context) => {
   try {
     // POST - Submit new suggestion (public)
     if (event.httpMethod === 'POST') {
-      const { text, reply_url, submitter_name } = JSON.parse(event.body);
+      const { text, reply_url, submitter_name, turnstile_token } = JSON.parse(event.body);
+
+      // Verify Turnstile token
+      if (TURNSTILE_SECRET && turnstile_token) {
+        const isValid = await verifyTurnstile(turnstile_token);
+        if (!isValid) {
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ error: 'تایید امنیتی ناموفق بود. لطفا دوباره تلاش کنید.' }),
+          };
+        }
+      }
 
       if (!text || text.length > 280) {
         return {
