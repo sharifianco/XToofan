@@ -49,7 +49,7 @@ IMPORTANT: Return ONLY a valid JSON array of strings, no other text. Example for
 ["Tweet 1 text here #IranMassacre #R2PforIran", "Tweet 2 text here #IranRevolution2026"]`;
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: {
