@@ -311,3 +311,122 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
+
+// Tab switching
+function showTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+  document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
+  document.getElementById(`${tab}-tab`).classList.add('active');
+
+  if (tab === 'suggestions') {
+    loadSuggestions();
+  }
+}
+
+// Load suggestions
+async function loadSuggestions() {
+  const container = document.getElementById('suggestions-list');
+
+  try {
+    const res = await fetch('/api/suggestions', {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to load suggestions');
+
+    const { suggestions } = await res.json();
+
+    if (!suggestions || suggestions.length === 0) {
+      container.innerHTML = '<p style="color: #8b98a5; text-align: center;">No suggestions yet.</p>';
+      return;
+    }
+
+    container.innerHTML = suggestions.map(s => `
+      <div class="suggestion-card" data-id="${s.id}">
+        <div class="tweet-header">
+          <div class="tweet-meta">
+            <span class="status-badge ${s.status}">${s.status}</span>
+            ${s.submitter_name ? `<span class="submitter">By: ${escapeHtml(s.submitter_name)}</span>` : ''}
+          </div>
+          <div class="tweet-actions">
+            ${s.status === 'pending' ? `
+              <button class="btn btn-success btn-sm" onclick="publishSuggestion('${s.id}')">Publish</button>
+              <button class="btn btn-warning btn-sm" onclick="rejectSuggestion('${s.id}')">Reject</button>
+            ` : ''}
+            <button class="btn btn-danger btn-sm" onclick="deleteSuggestion('${s.id}')">Delete</button>
+          </div>
+        </div>
+        <p class="tweet-text">${escapeHtml(s.text)}</p>
+        ${s.reply_url ? `<p class="tweet-comment-url">Reply to: ${escapeHtml(s.reply_url)}</p>` : ''}
+        <small style="color: #536471;">Submitted: ${new Date(s.created_at).toLocaleString()}</small>
+      </div>
+    `).join('');
+  } catch (error) {
+    console.error('Load suggestions error:', error);
+    container.innerHTML = '<p class="error">Failed to load suggestions</p>';
+  }
+}
+
+// Publish suggestion (creates a tweet)
+async function publishSuggestion(id) {
+  try {
+    const res = await fetch('/api/suggestions', {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ id, publish: true })
+    });
+
+    if (res.ok) {
+      showToast('Suggestion published as tweet!', 'success');
+      loadSuggestions();
+      loadTweets();
+    } else {
+      showToast('Failed to publish suggestion', 'error');
+    }
+  } catch (error) {
+    showToast('Failed to publish suggestion', 'error');
+  }
+}
+
+// Reject suggestion
+async function rejectSuggestion(id) {
+  try {
+    const res = await fetch('/api/suggestions', {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ id, status: 'rejected' })
+    });
+
+    if (res.ok) {
+      showToast('Suggestion rejected', 'success');
+      loadSuggestions();
+    } else {
+      showToast('Failed to reject suggestion', 'error');
+    }
+  } catch (error) {
+    showToast('Failed to reject suggestion', 'error');
+  }
+}
+
+// Delete suggestion
+async function deleteSuggestion(id) {
+  if (!confirm('Are you sure you want to delete this suggestion?')) return;
+
+  try {
+    const res = await fetch('/api/suggestions', {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ id })
+    });
+
+    if (res.ok) {
+      showToast('Suggestion deleted', 'success');
+      loadSuggestions();
+    } else {
+      showToast('Failed to delete suggestion', 'error');
+    }
+  } catch (error) {
+    showToast('Failed to delete suggestion', 'error');
+  }
+}

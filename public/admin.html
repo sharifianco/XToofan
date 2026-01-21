@@ -221,6 +221,80 @@
       justify-content: flex-end;
       margin-top: 20px;
     }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .tab-btn {
+      padding: 12px 24px;
+      background: #192734;
+      border: 1px solid #38444d;
+      border-radius: 8px;
+      color: #8b98a5;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: #1d9bf0;
+      border-color: #1d9bf0;
+      color: white;
+    }
+
+    .tab-btn:hover:not(.active) {
+      border-color: #1d9bf0;
+      color: #1d9bf0;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .suggestion-card {
+      background: #192734;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #38444d;
+      margin-bottom: 16px;
+    }
+
+    .suggestion-card .submitter {
+      font-size: 13px;
+      color: #8b98a5;
+      margin-bottom: 8px;
+    }
+
+    .status-badge.pending {
+      background: #ffd400;
+      color: #15202b;
+    }
+
+    .status-badge.published {
+      background: #00ba7c;
+      color: white;
+    }
+
+    .status-badge.rejected {
+      background: #f4212e;
+      color: white;
+    }
+
+    .btn-success {
+      background: #00ba7c;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #00a36c;
+    }
   </style>
 </head>
 <body>
@@ -246,9 +320,17 @@
         </div>
       </header>
 
-      <!-- Add Tweet Form -->
-      <div class="form-section">
-        <h3>Add New Tweet</h3>
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('tweets')">Tweets</button>
+        <button class="tab-btn" onclick="showTab('suggestions')">Suggestions</button>
+      </div>
+
+      <!-- Tweets Tab -->
+      <div id="tweets-tab" class="tab-content active">
+        <!-- Add Tweet Form -->
+        <div class="form-section">
+          <h3>Add New Tweet</h3>
         <form id="add-tweet-form">
           <div class="form-group">
             <label for="tweet-text">Tweet Text *</label>
@@ -268,11 +350,22 @@
         </form>
       </div>
 
-      <!-- Tweet List -->
-      <div class="form-section">
-        <h3>Manage Tweets</h3>
-        <div id="tweet-list" class="tweet-list">
-          <p class="loading">Loading tweets...</p>
+        <!-- Tweet List -->
+        <div class="form-section">
+          <h3>Manage Tweets</h3>
+          <div id="tweet-list" class="tweet-list">
+            <p class="loading">Loading tweets...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Suggestions Tab -->
+      <div id="suggestions-tab" class="tab-content">
+        <div class="form-section">
+          <h3>User Suggestions</h3>
+          <div id="suggestions-list" class="tweet-list">
+            <p class="loading">Loading suggestions...</p>
+          </div>
         </div>
       </div>
     </div>

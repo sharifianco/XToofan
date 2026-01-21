@@ -3,8 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>طوفان توییتری</title>
+  <title>توفان توییتری</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .nav-menu {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .nav-link {
+      color: #1d9bf0;
+      text-decoration: none;
+      padding: 8px 16px;
+      border: 1px solid #1d9bf0;
+      border-radius: 20px;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .nav-link:hover {
+      background: #1d9bf0;
+      color: white;
+    }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal.hidden {
+      display: none;
+    }
+    .modal-content {
+      background: #192734;
+      border-radius: 16px;
+      padding: 24px;
+      width: 90%;
+      max-width: 500px;
+      border: 1px solid #38444d;
+      text-align: center;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: #8b98a5;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .modal-body {
+      line-height: 1.8;
+    }
+    .modal-body a {
+      color: #1d9bf0;
+      word-break: break-all;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -12,6 +76,10 @@
       <div class="header-content">
         <h1>طوفان توییتری</h1>
         <p class="subtitle">توییت های پیشنویس شده برای طوفان توییتری</p>
+        <nav class="nav-menu">
+          <a href="#" class="nav-link" onclick="openAboutModal(); return false;">توفان اکس چیست؟</a>
+          <a href="suggest.html" class="nav-link">پیشنهاد توییت</a>
+        </nav>
       </div>
     </header>
 
@@ -24,6 +92,33 @@
     <div id="toast" class="toast"></div>
   </div>
 
+  <!-- About Modal -->
+  <div id="about-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>توفان اکس چیست؟</h3>
+        <button class="modal-close" onclick="closeAboutModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>این یک کد ساده هست برای توییت کردن سریع</p>
+        <p style="margin-top: 16px;">لینک پابلیک در گیتهاب:</p>
+        <a href="https://github.com/sharifianco/XToofan" target="_blank">https://github.com/sharifianco/XToofan</a>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
+  <script>
+    function openAboutModal() {
+      document.getElementById('about-modal').classList.remove('hidden');
+    }
+    function closeAboutModal() {
+      document.getElementById('about-modal').classList.add('hidden');
+    }
+    // Close modal on outside click
+    document.getElementById('about-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeAboutModal();
+    });
+  </script>
 </body>
 </html>

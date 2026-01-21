@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پیشنهاد توییت - توفان توییتری</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .suggest-container {
+      max-width: 600px;
+    }
+    .back-link {
+      color: #1d9bf0;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    .form-section {
+      background: #192734;
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid #38444d;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #8b98a5;
+      font-size: 14px;
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #38444d;
+      border-radius: 8px;
+      background: #15202b;
+      color: #e7e9ea;
+      font-size: 16px;
+      font-family: inherit;
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #1d9bf0;
+    }
+    .char-counter {
+      text-align: left;
+      font-size: 13px;
+      color: #8b98a5;
+      margin-top: 4px;
+    }
+    .char-counter.warning {
+      color: #f4212e;
+    }
+    .success-message {
+      background: #00ba7c;
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      text-align: center;
+      margin-top: 16px;
+    }
+    .success-message.hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container suggest-container">
+    <a href="index.html" class="back-link">← بازگشت به صفحه اصلی</a>
+
+    <header>
+      <div class="header-content">
+        <h1>پیشنهاد توییت</h1>
+        <p class="subtitle">توییت یا ریپلای پیشنهادی خود را ارسال کنید</p>
+      </div>
+    </header>
+
+    <main>
+      <div class="form-section">
+        <form id="suggest-form">
+          <div class="form-group">
+            <label for="suggest-text">متن توییت *</label>
+            <textarea id="suggest-text" placeholder="متن توییت پیشنهادی خود را بنویسید..." maxlength="280" required></textarea>
+            <div id="char-counter" class="char-counter">0/280</div>
+          </div>
+          <div class="form-group">
+            <label for="reply-url">لینک توییت برای ریپلای (اختیاری)</label>
+            <input type="url" id="reply-url" placeholder="https://x.com/user/status/1234567890">
+            <small style="color: #8b98a5;">اگر این توییت قرار است به توییت دیگری ریپلای شود، لینک آن را وارد کنید</small>
+          </div>
+          <div class="form-group">
+            <label for="submitter-name">نام شما (اختیاری)</label>
+            <input type="text" id="submitter-name" placeholder="نام یا نام کاربری شما">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">ارسال پیشنهاد</button>
+        </form>
+        <div id="success-message" class="success-message hidden">
+          پیشنهاد شما با موفقیت ارسال شد! پس از بررسی توسط ادمین منتشر خواهد شد.
+        </div>
+      </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script>
+    // Character counter
+    const textarea = document.getElementById('suggest-text');
+    const counter = document.getElementById('char-counter');
+
+    textarea.addEventListener('input', () => {
+      const len = textarea.value.length;
+      counter.textContent = `${len}/280`;
+      counter.classList.toggle('warning', len > 260);
+    });
+
+    // Form submission
+    document.getElementById('suggest-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const text = document.getElementById('suggest-text').value.trim();
+      const reply_url = document.getElementById('reply-url').value.trim();
+      const submitter_name = document.getElementById('submitter-name').value.trim();
+
+      try {
+        const res = await fetch('/api/suggestions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text,
+            reply_url: reply_url || null,
+            submitter_name: submitter_name || null
+          })
+        });
+
+        if (res.ok) {
+          document.getElementById('suggest-form').reset();
+          counter.textContent = '0/280';
+          document.getElementById('success-message').classList.remove('hidden');
+          setTimeout(() => {
+            document.getElementById('success-message').classList.add('hidden');
+          }, 5000);
+        } else {
+          const data = await res.json();
+          showToast(data.error || 'خطا در ارسال پیشنهاد', 'error');
+        }
+      } catch (error) {
+        showToast('خطا در ارسال پیشنهاد', 'error');
+      }
+    });
+
+    function showToast(message, type) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type} show`;
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
