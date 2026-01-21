@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>آمار - توفان توییتری</title>
-  <link rel="stylesheet" href="styles.css?v=1.0.0">
+  <link rel="stylesheet" href="styles.css?v=1.0.1">
   <style>
     .stats-container {
       max-width: 1200px;
@@ -169,6 +169,10 @@
         <h2>تعداد کل توییت‌های ارسال شده</h2>
         <div class="stat-value" id="total-clicks">--</div>
       </div>
+      <div class="stat-card">
+        <h2>تعداد کلیک روی لینک‌های استوری</h2>
+        <div class="stat-value" id="total-link-clicks">--</div>
+      </div>
     </div>
 
     <div class="trends-section">
@@ -206,9 +210,11 @@
         if (!res.ok) throw new Error('Failed to load stats');
         const data = await res.json();
         document.getElementById('total-clicks').textContent = data.total_clicks.toLocaleString('fa-IR');
+        document.getElementById('total-link-clicks').textContent = (data.total_link_clicks || 0).toLocaleString('fa-IR');
       } catch (error) {
         console.error('Error loading stats:', error);
         document.getElementById('total-clicks').textContent = '۰';
+        document.getElementById('total-link-clicks').textContent = '۰';
       }
     }
 

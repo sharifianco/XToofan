@@ -88,7 +88,7 @@ async function loadTweets() {
             </a>
             ${shortUrl ? `
               <button class="btn btn-copy-link" onclick="copyShortLink('${shortUrl}')">
-                📋 کپی لینک مخصوص استوری
+                📋 کپی لینک مخصوص استوری ${tweet.link_clicks > 0 ? `<span class="link-clicks">(${tweet.link_clicks} کلیک)</span>` : ''}
               </button>
             ` : ''}
           </div>

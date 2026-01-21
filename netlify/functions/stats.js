@@ -37,16 +37,29 @@ exports.handler = async (event) => {
 
     // GET - Get total click count
     if (event.httpMethod === 'GET') {
-      const { count, error } = await supabase
+      // Get tweet click stats
+      const { count: tweetClicks, error: clickError } = await supabase
         .from('click_stats')
         .select('*', { count: 'exact', head: true });
 
-      if (error) throw error;
+      if (clickError) throw clickError;
+
+      // Get total short link clicks from deep_links table
+      const { data: linkData, error: linkError } = await supabase
+        .from('deep_links')
+        .select('clicks');
+
+      if (linkError) throw linkError;
+
+      const totalLinkClicks = linkData?.reduce((sum, row) => sum + (row.clicks || 0), 0) || 0;
 
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ total_clicks: count }),
+        body: JSON.stringify({
+          total_clicks: tweetClicks,
+          total_link_clicks: totalLinkClicks
+        }),
       };
     }
 

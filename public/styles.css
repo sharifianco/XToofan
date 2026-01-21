@@ -371,3 +371,11 @@ main h2 {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }
+
+/* Link click count badge */
+.link-clicks {
+  font-size: 12px;
+  font-weight: normal;
+  opacity: 0.9;
+  margin-right: 4px;
+}
