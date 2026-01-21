@@ -12,6 +12,12 @@ function markTweetAsClicked(tweetId) {
   if (!clicked.includes(tweetId)) {
     clicked.push(tweetId);
     localStorage.setItem('clickedTweets', JSON.stringify(clicked));
+    // Track click to server for stats
+    fetch('/api/stats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tweet_id: tweetId })
+    }).catch(err => console.error('Failed to track click:', err));
   }
   // Update UI
   const card = document.querySelector(`.tweet-card[data-id="${tweetId}"]`);

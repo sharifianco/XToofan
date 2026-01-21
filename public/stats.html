@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>آمار - توفان توییتری</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .stats-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .stats-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .stats-header h1 {
+      color: #e7e9ea;
+      margin-bottom: 8px;
+    }
+    .back-link {
+      color: #1d9bf0;
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 24px;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: #192734;
+      border: 1px solid #38444d;
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+    }
+    .stat-card h2 {
+      color: #8b98a5;
+      font-size: 14px;
+      margin-bottom: 12px;
+      font-weight: normal;
+    }
+    .stat-value {
+      color: #1d9bf0;
+      font-size: 48px;
+      font-weight: bold;
+    }
+    .trends-section {
+      margin-top: 32px;
+    }
+    .trends-section h2 {
+      color: #e7e9ea;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .trends-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .country-card {
+      background: #192734;
+      border: 1px solid #38444d;
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .country-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #38444d;
+    }
+    .country-flag {
+      font-size: 32px;
+    }
+    .country-name {
+      color: #e7e9ea;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .trend-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .trend-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #38444d;
+    }
+    .trend-item:last-child {
+      border-bottom: none;
+    }
+    .trend-rank {
+      color: #8b98a5;
+      font-size: 14px;
+      min-width: 24px;
+    }
+    .trend-name {
+      color: #e7e9ea;
+      flex: 1;
+    }
+    .trend-name a {
+      color: #e7e9ea;
+      text-decoration: none;
+    }
+    .trend-name a:hover {
+      color: #1d9bf0;
+    }
+    .trend-volume {
+      color: #8b98a5;
+      font-size: 13px;
+    }
+    .loading-trends {
+      text-align: center;
+      color: #8b98a5;
+      padding: 40px;
+    }
+    .error-message {
+      background: rgba(244, 33, 46, 0.1);
+      border: 1px solid #f4212e;
+      color: #f4212e;
+      padding: 16px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .refresh-btn {
+      background: #1d9bf0;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 16px;
+    }
+    .refresh-btn:hover {
+      background: #1a8cd8;
+    }
+    .last-updated {
+      text-align: center;
+      color: #8b98a5;
+      font-size: 13px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="stats-container">
+    <a href="index.html" class="back-link">← بازگشت به صفحه اصلی</a>
+
+    <div class="stats-header">
+      <h1>آمار توفان توییتری</h1>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h2>تعداد کل توییت‌های ارسال شده</h2>
+        <div class="stat-value" id="total-clicks">--</div>
+      </div>
+    </div>
+
+    <div class="trends-section">
+      <h2>ترندهای سیاسی X در کشورهای مختلف</h2>
+      <div class="last-updated" id="last-updated"></div>
+      <button class="refresh-btn" onclick="loadTrends()" style="display: block; margin: 16px auto;">بروزرسانی ترندها</button>
+      <div id="trends-container" class="trends-grid">
+        <p class="loading-trends">در حال بارگذاری ترندها...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Countries to fetch trends for (politics-related)
+    const countries = [
+      { code: 'IR', name: 'ایران', flag: '🇮🇷', woeid: 23424851 },
+      { code: 'US', name: 'آمریکا', flag: '🇺🇸', woeid: 23424977 },
+      { code: 'GB', name: 'انگلستان', flag: '🇬🇧', woeid: 23424975 },
+      { code: 'DE', name: 'آلمان', flag: '🇩🇪', woeid: 23424829 },
+      { code: 'FR', name: 'فرانسه', flag: '🇫🇷', woeid: 23424819 },
+      { code: 'CA', name: 'کانادا', flag: '🇨🇦', woeid: 23424775 },
+      { code: 'TR', name: 'ترکیه', flag: '🇹🇷', woeid: 23424969 },
+      { code: 'AE', name: 'امارات', flag: '🇦🇪', woeid: 23424738 },
+    ];
+
+    // Load stats on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadStats();
+      loadTrends();
+    });
+
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/stats');
+        if (!res.ok) throw new Error('Failed to load stats');
+        const data = await res.json();
+        document.getElementById('total-clicks').textContent = data.total_clicks.toLocaleString('fa-IR');
+      } catch (error) {
+        console.error('Error loading stats:', error);
+        document.getElementById('total-clicks').textContent = '۰';
+      }
+    }
+
+    async function loadTrends() {
+      const container = document.getElementById('trends-container');
+      container.innerHTML = '<p class="loading-trends">در حال بارگذاری ترندها...</p>';
+
+      try {
+        const res = await fetch('/api/trends');
+        if (!res.ok) throw new Error('Failed to load trends');
+        const data = await res.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        renderTrends(data.trends);
+        document.getElementById('last-updated').textContent =
+          `آخرین بروزرسانی: ${new Date().toLocaleString('fa-IR')}`;
+      } catch (error) {
+        console.error('Error loading trends:', error);
+        container.innerHTML = `
+          <div class="error-message">
+            خطا در بارگذاری ترندها. لطفا دوباره تلاش کنید.
+          </div>
+        `;
+      }
+    }
+
+    function renderTrends(trendsData) {
+      const container = document.getElementById('trends-container');
+
+      if (!trendsData || Object.keys(trendsData).length === 0) {
+        container.innerHTML = '<p class="loading-trends">ترندی یافت نشد</p>';
+        return;
+      }
+
+      container.innerHTML = countries
+        .filter(country => trendsData[country.code])
+        .map(country => {
+          const trends = trendsData[country.code] || [];
+          return `
+            <div class="country-card">
+              <div class="country-header">
+                <span class="country-flag">${country.flag}</span>
+                <span class="country-name">${country.name}</span>
+              </div>
+              <ul class="trend-list">
+                ${trends.slice(0, 10).map((trend, index) => `
+                  <li class="trend-item">
+                    <span class="trend-rank">${(index + 1).toLocaleString('fa-IR')}</span>
+                    <span class="trend-name">
+                      <a href="https://twitter.com/search?q=${encodeURIComponent(trend.name)}" target="_blank">
+                        ${escapeHtml(trend.name)}
+                      </a>
+                    </span>
+                    ${trend.volume ? `<span class="trend-volume">${formatVolume(trend.volume)}</span>` : ''}
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+          `;
+        }).join('');
+    }
+
+    function formatVolume(volume) {
+      if (volume >= 1000000) {
+        return (volume / 1000000).toFixed(1) + 'M';
+      } else if (volume >= 1000) {
+        return (volume / 1000).toFixed(1) + 'K';
+      }
+      return volume.toLocaleString('fa-IR');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
