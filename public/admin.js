@@ -1,17 +1,33 @@
+// Token management
+let authToken = localStorage.getItem('adminToken');
+
+function getAuthHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${authToken}`
+  };
+}
+
 // Check admin status on page load
 document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    const res = await fetch('/admin/status');
-    const { isAdmin } = await res.json();
-
-    if (isAdmin) {
-      showAdminPanel();
-      loadTweets();
-    } else {
+  if (authToken) {
+    // Verify token by trying to fetch tweets
+    try {
+      const res = await fetch('/api/admin-tweets', {
+        headers: getAuthHeaders()
+      });
+      if (res.ok) {
+        showAdminPanel();
+        loadTweets();
+      } else {
+        localStorage.removeItem('adminToken');
+        authToken = null;
+        showLoginForm();
+      }
+    } catch (error) {
       showLoginForm();
     }
-  } catch (error) {
-    console.error('Status check error:', error);
+  } else {
     showLoginForm();
   }
 
@@ -50,22 +66,33 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   const errorEl = document.getElementById('login-error');
 
   try {
-    const res = await fetch('/admin/login', {
+    const res = await fetch('/api/admin-login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password })
     });
 
-    if (res.ok) {
+    const data = await res.json();
+
+    if (res.ok && data.token) {
+      authToken = data.token;
+      localStorage.setItem('adminToken', authToken);
       showAdminPanel();
       loadTweets();
     } else {
-      errorEl.textContent = 'Invalid password';
+      errorEl.textContent = data.error || 'Invalid password';
     }
   } catch (error) {
     errorEl.textContent = 'Login failed. Please try again.';
   }
 });
+
+// Logout function
+function logout() {
+  localStorage.removeItem('adminToken');
+  authToken = null;
+  showLoginForm();
+}
 
 // Add tweet form
 document.getElementById('add-tweet-form').addEventListener('submit', async (e) => {
@@ -76,9 +103,9 @@ document.getElementById('add-tweet-form').addEventListener('submit', async (e) =
   const comment_tweet_url = document.getElementById('comment-url').value.trim();
 
   try {
-    const res = await fetch('/admin/tweets', {
+    const res = await fetch('/api/admin-tweets', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ text, category: category || null, comment_tweet_url: comment_tweet_url || null })
     });
 
@@ -101,7 +128,9 @@ async function loadTweets() {
   const container = document.getElementById('tweet-list');
 
   try {
-    const res = await fetch('/admin/tweets');
+    const res = await fetch('/api/admin-tweets', {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to load tweets');
 
     const { tweets } = await res.json();
@@ -143,7 +172,9 @@ let currentEditTweet = null;
 
 async function editTweet(id) {
   try {
-    const res = await fetch('/admin/tweets');
+    const res = await fetch('/api/admin-tweets', {
+      headers: getAuthHeaders()
+    });
     const { tweets } = await res.json();
     const tweet = tweets.find(t => t.id === id);
 
@@ -180,10 +211,11 @@ document.getElementById('edit-tweet-form').addEventListener('submit', async (e) 
   const comment_tweet_url = document.getElementById('edit-comment-url').value.trim();
 
   try {
-    const res = await fetch(`/admin/tweets/${id}`, {
+    const res = await fetch('/api/admin-tweets', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
+        id,
         text,
         category: category || null,
         comment_tweet_url: comment_tweet_url || null,
@@ -207,10 +239,28 @@ document.getElementById('edit-tweet-form').addEventListener('submit', async (e) 
 // Toggle tweet active status
 async function toggleTweet(id, active) {
   try {
-    const res = await fetch(`/admin/tweets/${id}`, {
+    // First get the current tweet data
+    const tweetsRes = await fetch('/api/admin-tweets', {
+      headers: getAuthHeaders()
+    });
+    const { tweets } = await tweetsRes.json();
+    const tweet = tweets.find(t => t.id === id);
+
+    if (!tweet) {
+      showToast('Tweet not found', 'error');
+      return;
+    }
+
+    const res = await fetch('/api/admin-tweets', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ active })
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        id,
+        text: tweet.text,
+        category: tweet.category,
+        comment_tweet_url: tweet.comment_tweet_url,
+        active
+      })
     });
 
     if (res.ok) {
@@ -229,7 +279,11 @@ async function deleteTweet(id) {
   if (!confirm('Are you sure you want to delete this tweet?')) return;
 
   try {
-    const res = await fetch(`/admin/tweets/${id}`, { method: 'DELETE' });
+    const res = await fetch('/api/admin-tweets', {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ id })
+    });
 
     if (res.ok) {
       showToast('Tweet deleted', 'success');
