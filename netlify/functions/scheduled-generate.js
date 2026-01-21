@@ -98,6 +98,70 @@ IMPORTANT: Return ONLY a valid JSON array of strings, no other text. Example for
     .slice(0, count);
 }
 
+// Generate a short random code
+function generateShortCode(length = 6) {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+// Build X intent URL for tweet
+function buildIntentUrl(tweetText) {
+  const baseUrl = 'https://twitter.com/intent/tweet';
+  const params = new URLSearchParams();
+  params.set('text', tweetText);
+  return `${baseUrl}?${params.toString()}`;
+}
+
+// Create short link for a tweet
+async function createShortLink(tweetData) {
+  let shortCode;
+  let isUnique = false;
+  let attempts = 0;
+
+  while (!isUnique && attempts < 10) {
+    shortCode = generateShortCode();
+    const { data: check } = await supabase
+      .from('deep_links')
+      .select('id')
+      .eq('short_code', shortCode)
+      .single();
+
+    if (!check) {
+      isUnique = true;
+    }
+    attempts++;
+  }
+
+  if (!isUnique) {
+    console.error('Failed to generate unique short code');
+    return null;
+  }
+
+  const intentUrl = buildIntentUrl(tweetData.text);
+
+  const { data, error } = await supabase
+    .from('deep_links')
+    .insert([{
+      short_code: shortCode,
+      tweet_id: tweetData.id,
+      tweet_text: tweetData.text,
+      intent_url: intentUrl,
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating short link:', error);
+    return null;
+  }
+
+  return shortCode;
+}
+
 exports.handler = async (event) => {
   console.log('Scheduled tweet generation started');
 
@@ -137,15 +201,25 @@ exports.handler = async (event) => {
     // Save to database
     let savedCount = 0;
     for (const tweet of allTweets) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('tweets')
         .insert([{
           text: tweet.text,
           category: tweet.category,
           active: true,
-        }]);
+        }])
+        .select()
+        .single();
 
-      if (!error) {
+      if (!error && data) {
+        // Generate short link for the new tweet
+        const shortCode = await createShortLink(data);
+        if (shortCode) {
+          await supabase
+            .from('tweets')
+            .update({ short_code: shortCode })
+            .eq('id', data.id);
+        }
         savedCount++;
       } else {
         console.error('Error saving tweet:', error);

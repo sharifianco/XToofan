@@ -61,6 +61,7 @@ async function loadTweets() {
       const intentUrl = buildIntentUrl(tweet);
       const isClicked = isTweetClicked(tweet.id);
       const buttonText = tweet.comment_tweet_url ? 'Reply on X' : 'Post on X';
+      const shortUrl = tweet.short_code ? `https://xtoofan.site/l/${tweet.short_code}` : null;
 
       return `
         <div class="tweet-card ${isClicked ? 'clicked' : ''}" data-id="${tweet.id}">
@@ -85,9 +86,11 @@ async function loadTweets() {
             <a href="${intentUrl}" target="_blank" class="btn btn-post ${isClicked ? 'clicked' : ''}" onclick="markTweetAsClicked('${tweet.id}')">
               ${isClicked ? '✓ ' : ''}${buttonText}
             </a>
-            <button class="btn btn-copy-link" onclick="generateAndCopyShortLink('${tweet.id}', '${encodeURIComponent(tweet.text)}', '${encodeURIComponent(intentUrl)}')">
-              📋 کپی لینک
-            </button>
+            ${shortUrl ? `
+              <button class="btn btn-copy-link" onclick="copyShortLink('${shortUrl}')">
+                📋 کپی لینک مخصوص استوری
+              </button>
+            ` : ''}
           </div>
         </div>
       `;
@@ -145,34 +148,12 @@ function formatDate(dateString) {
   });
 }
 
-// Generate and copy short link for sharing
-async function generateAndCopyShortLink(tweetId, encodedText, encodedIntentUrl) {
-  const intentUrl = decodeURIComponent(encodedIntentUrl);
-  const tweetText = decodeURIComponent(encodedText);
-
+// Copy pre-generated short link
+function copyShortLink(shortUrl) {
   try {
-    // Show loading state
-    showToast('در حال ایجاد لینک کوتاه...', 'info');
-
-    const res = await fetch('/api/deeplink', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tweet_id: tweetId,
-        tweet_text: tweetText,
-        intent_url: intentUrl,
-      }),
-    });
-
-    if (!res.ok) throw new Error('Failed to create short link');
-
-    const data = await res.json();
-    const shortUrl = data.short_url;
-
-    // Copy to clipboard
-    try {
-      await navigator.clipboard.writeText(shortUrl);
-    } catch (err) {
+    navigator.clipboard.writeText(shortUrl).then(() => {
+      showToast(`لینک کپی شد: ${shortUrl}`, 'success');
+    }).catch(() => {
       // Fallback for older browsers
       const textarea = document.createElement('textarea');
       textarea.value = shortUrl;
@@ -180,11 +161,10 @@ async function generateAndCopyShortLink(tweetId, encodedText, encodedIntentUrl) 
       textarea.select();
       document.execCommand('copy');
       document.body.removeChild(textarea);
-    }
-
-    showToast(`لینک کپی شد: ${shortUrl}`, 'success');
+      showToast(`لینک کپی شد: ${shortUrl}`, 'success');
+    });
   } catch (error) {
-    console.error('Error generating short link:', error);
-    showToast('خطا در ایجاد لینک کوتاه', 'error');
+    console.error('Error copying short link:', error);
+    showToast('خطا در کپی لینک', 'error');
   }
 }

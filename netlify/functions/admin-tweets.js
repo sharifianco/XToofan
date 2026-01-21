@@ -8,6 +8,80 @@ const supabase = createClient(
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET;
 
+// Generate a short random code
+function generateShortCode(length = 6) {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+// Build X intent URL for tweet
+function buildIntentUrl(tweet) {
+  const baseUrl = 'https://twitter.com/intent/tweet';
+  const params = new URLSearchParams();
+  params.set('text', tweet.text);
+
+  if (tweet.comment_tweet_url) {
+    const match = tweet.comment_tweet_url.match(/status\/(\d+)/);
+    if (match) {
+      params.set('in_reply_to', match[1]);
+    }
+  }
+
+  return `${baseUrl}?${params.toString()}`;
+}
+
+// Create short link for a tweet
+async function createShortLink(tweet) {
+  // Generate unique short code
+  let shortCode;
+  let isUnique = false;
+  let attempts = 0;
+
+  while (!isUnique && attempts < 10) {
+    shortCode = generateShortCode();
+    const { data: check } = await supabase
+      .from('deep_links')
+      .select('id')
+      .eq('short_code', shortCode)
+      .single();
+
+    if (!check) {
+      isUnique = true;
+    }
+    attempts++;
+  }
+
+  if (!isUnique) {
+    console.error('Failed to generate unique short code');
+    return null;
+  }
+
+  const intentUrl = buildIntentUrl(tweet);
+
+  // Save the deep link
+  const { data, error } = await supabase
+    .from('deep_links')
+    .insert([{
+      short_code: shortCode,
+      tweet_id: tweet.id,
+      tweet_text: tweet.text,
+      intent_url: intentUrl,
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating short link:', error);
+    return null;
+  }
+
+  return shortCode;
+}
+
 function verifyToken(event) {
   const authHeader = event.headers.authorization || event.headers.Authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -78,6 +152,18 @@ exports.handler = async (event, context) => {
         .single();
 
       if (error) throw error;
+
+      // Generate short link for the new tweet
+      const shortCode = await createShortLink(data);
+      if (shortCode) {
+        // Update tweet with short_code
+        await supabase
+          .from('tweets')
+          .update({ short_code: shortCode })
+          .eq('id', data.id);
+        data.short_code = shortCode;
+      }
+
       return {
         statusCode: 200,
         headers,
