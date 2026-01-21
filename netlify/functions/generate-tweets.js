@@ -50,8 +50,11 @@ Guidelines:
 async function generateTweetsWithGemini(count, persona, topic) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error('GEMINI_API_KEY not configured');
+    console.error('GEMINI_API_KEY environment variable is not set');
+    throw new Error('GEMINI_API_KEY not configured. Please add it to Netlify environment variables.');
   }
+
+  console.log('Generating tweets with Gemini:', { count, persona, hasTopic: !!topic });
 
   const selectedPersona = personas[persona] || personas.advocate;
 
@@ -92,10 +95,12 @@ IMPORTANT: Return ONLY a valid JSON array of strings, no other text. Example for
 
   if (!response.ok) {
     const error = await response.text();
+    console.error('Gemini API error response:', error);
     throw new Error(`Gemini API error: ${error}`);
   }
 
   const data = await response.json();
+  console.log('Gemini response received, candidates:', data.candidates?.length);
 
   // Extract text from Gemini response
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -173,14 +178,18 @@ exports.handler = async (event) => {
 
   try {
     // Check for admin auth or scheduled trigger
+    // Headers are lowercase in Netlify functions
     const isScheduled = event.headers['x-netlify-scheduled'] === 'true';
-    const isAdmin = verifyToken(event.headers.authorization);
+    const authHeader = event.headers.authorization || event.headers.Authorization;
+    const isAdmin = verifyToken(authHeader);
+
+    console.log('Auth check:', { isScheduled, hasAuthHeader: !!authHeader, isAdmin });
 
     if (!isScheduled && !isAdmin) {
       return {
         statusCode: 401,
         headers,
-        body: JSON.stringify({ error: 'Unauthorized' }),
+        body: JSON.stringify({ error: 'Unauthorized - Please login again' }),
       };
     }
 
