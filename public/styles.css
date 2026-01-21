@@ -1,8 +1,7 @@
-/* IranSans Font */
+/* IranSans Font - Using fontiran CDN */
 @font-face {
   font-family: 'IRANSans';
-  src: url('https://cdn.jsdelivr.net/gh/perian-ir/iran-sans@latest/woff2/IRANSansWeb.woff2') format('woff2'),
-       url('https://cdn.jsdelivr.net/gh/perian-ir/iran-sans@latest/woff/IRANSansWeb.woff') format('woff');
+  src: url('https://fonts.cdnfonts.com/s/20017/IRANSansWeb.woff') format('woff');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -10,8 +9,7 @@
 
 @font-face {
   font-family: 'IRANSans';
-  src: url('https://cdn.jsdelivr.net/gh/perian-ir/iran-sans@latest/woff2/IRANSansWeb_Bold.woff2') format('woff2'),
-       url('https://cdn.jsdelivr.net/gh/perian-ir/iran-sans@latest/woff/IRANSansWeb_Bold.woff') format('woff');
+  src: url('https://fonts.cdnfonts.com/s/20017/IRANSansWeb_Bold.woff') format('woff');
   font-weight: bold;
   font-style: normal;
   font-display: swap;
