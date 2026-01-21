@@ -58,10 +58,13 @@ async function loadTweets() {
 
       return `
         <div class="tweet-card ${isClicked ? 'clicked' : ''}" data-id="${tweet.id}">
-          <div class="tweet-badges">
-            ${tweet.category ? `<span class="category">${escapeHtml(tweet.category)}</span>` : ''}
-            ${tweet.comment_tweet_url ? `<span class="category reply-badge">Reply</span>` : ''}
-            ${isClicked ? '<span class="category clicked-badge">Posted</span>' : ''}
+          <div class="tweet-header">
+            <div class="tweet-badges">
+              ${tweet.category ? `<span class="category">${escapeHtml(tweet.category)}</span>` : ''}
+              ${tweet.comment_tweet_url ? `<span class="category reply-badge">Reply</span>` : ''}
+              ${isClicked ? '<span class="category clicked-badge">Posted</span>' : ''}
+            </div>
+            <span class="tweet-date">${formatDate(tweet.created_at)}</span>
           </div>
           ${tweet.comment_tweet_url ? `
             <div class="reply-preview">
@@ -117,4 +120,16 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+function formatDate(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('fa-IR', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }

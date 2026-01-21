@@ -161,10 +161,21 @@ main h2 {
   border: 1px solid #38444d;
 }
 
+.tweet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
 .tweet-badges {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
+}
+
+.tweet-date {
+  color: #8b98a5;
+  font-size: 13px;
 }
 
 .tweet-card .category {
