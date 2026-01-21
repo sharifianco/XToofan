@@ -85,8 +85,8 @@ async function loadTweets() {
             <a href="${intentUrl}" target="_blank" class="btn btn-post ${isClicked ? 'clicked' : ''}" onclick="markTweetAsClicked('${tweet.id}')">
               ${isClicked ? '✓ ' : ''}${buttonText}
             </a>
-            <button class="btn btn-instagram" onclick="generateAndCopyShortLink('${tweet.id}', '${encodeURIComponent(tweet.text)}', '${encodeURIComponent(intentUrl)}')">
-              کپی لینک کوتاه
+            <button class="btn btn-copy-link" onclick="generateAndCopyShortLink('${tweet.id}', '${encodeURIComponent(tweet.text)}', '${encodeURIComponent(intentUrl)}')">
+              📋 کپی لینک
             </button>
           </div>
         </div>
