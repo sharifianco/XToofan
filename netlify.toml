@@ -10,6 +10,12 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
+# Deep link short URLs - redirect /l/CODE to the redirect page
+[[redirects]]
+  from = "/l/*"
+  to = "/l/index.html"
+  status = 200
+
 # Scheduled function to generate 10 tweets daily at 8:00 AM UTC
 [functions."scheduled-generate"]
   schedule = "0 8 * * *"

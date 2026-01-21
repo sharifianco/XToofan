@@ -85,8 +85,8 @@ async function loadTweets() {
             <a href="${intentUrl}" target="_blank" class="btn btn-post ${isClicked ? 'clicked' : ''}" onclick="markTweetAsClicked('${tweet.id}')">
               ${isClicked ? '✓ ' : ''}${buttonText}
             </a>
-            <button class="btn btn-instagram" onclick="copyInstagramDeepLink('${encodeURIComponent(intentUrl)}')">
-              Copy for Instagram Story
+            <button class="btn btn-instagram" onclick="generateAndCopyShortLink('${tweet.id}', '${encodeURIComponent(tweet.text)}', '${encodeURIComponent(intentUrl)}')">
+              کپی لینک کوتاه
             </button>
           </div>
         </div>
@@ -145,74 +145,46 @@ function formatDate(dateString) {
   });
 }
 
-// Generate Instagram deep link for sharing X intent URL in Stories
-function generateInstagramDeepLink(xIntentUrl) {
-  // The X intent URL to share via Instagram Story
-  const encodedUrl = encodeURIComponent(xIntentUrl);
-
-  // Instagram Stories deep link with sticker URL
-  // This will open Instagram Stories with a link sticker
-  return {
-    ios: `instagram-stories://share?source_application=xtoofan&content_url=${encodedUrl}`,
-    android: `intent://share?source_application=xtoofan&content_url=${encodedUrl}#Intent;package=com.instagram.android;scheme=instagram-stories;end`,
-    fallback: xIntentUrl
-  };
-}
-
-// Copy Instagram deep link to clipboard
-async function copyInstagramDeepLink(encodedIntentUrl) {
+// Generate and copy short link for sharing
+async function generateAndCopyShortLink(tweetId, encodedText, encodedIntentUrl) {
   const intentUrl = decodeURIComponent(encodedIntentUrl);
-  const deepLinks = generateInstagramDeepLink(intentUrl);
-
-  // Detect platform
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const isAndroid = /Android/.test(navigator.userAgent);
-
-  // Create a formatted text with all links
-  const copyText = `🔗 Share this tweet on Instagram Story:
-
-📱 iOS Deep Link:
-${deepLinks.ios}
-
-🤖 Android Deep Link:
-${deepLinks.android}
-
-🌐 Direct X Link (fallback):
-${deepLinks.fallback}
-
----
-JSON Format:
-${JSON.stringify(deepLinks, null, 2)}`;
+  const tweetText = decodeURIComponent(encodedText);
 
   try {
-    await navigator.clipboard.writeText(copyText);
-    showToast('Deep links copied to clipboard!', 'success');
-  } catch (err) {
-    // Fallback for older browsers
-    const textarea = document.createElement('textarea');
-    textarea.value = copyText;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
-    showToast('Deep links copied to clipboard!', 'success');
-  }
-}
+    // Show loading state
+    showToast('در حال ایجاد لینک کوتاه...', 'info');
 
-// Try to open Instagram Stories directly (works on mobile)
-function openInstagramStory(encodedIntentUrl) {
-  const intentUrl = decodeURIComponent(encodedIntentUrl);
-  const deepLinks = generateInstagramDeepLink(intentUrl);
+    const res = await fetch('/api/deeplink', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tweet_id: tweetId,
+        tweet_text: tweetText,
+        intent_url: intentUrl,
+      }),
+    });
 
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const isAndroid = /Android/.test(navigator.userAgent);
+    if (!res.ok) throw new Error('Failed to create short link');
 
-  if (isIOS) {
-    window.location.href = deepLinks.ios;
-  } else if (isAndroid) {
-    window.location.href = deepLinks.android;
-  } else {
-    // Desktop - copy to clipboard instead
-    copyInstagramDeepLink(encodedIntentUrl);
+    const data = await res.json();
+    const shortUrl = data.short_url;
+
+    // Copy to clipboard
+    try {
+      await navigator.clipboard.writeText(shortUrl);
+    } catch (err) {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = shortUrl;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+
+    showToast(`لینک کپی شد: ${shortUrl}`, 'success');
+  } catch (error) {
+    console.error('Error generating short link:', error);
+    showToast('خطا در ایجاد لینک کوتاه', 'error');
   }
 }

@@ -145,6 +145,11 @@ body {
   transform: scale(0.98);
 }
 
+/* Info toast */
+.toast.info {
+  background: #1d9bf0;
+}
+
 /* Header */
 header {
   border-bottom: 1px solid #38444d;
