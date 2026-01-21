@@ -1,3 +1,37 @@
+// Track clicked tweets in localStorage
+function getClickedTweets() {
+  try {
+    return JSON.parse(localStorage.getItem('clickedTweets') || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function markTweetAsClicked(tweetId) {
+  const clicked = getClickedTweets();
+  if (!clicked.includes(tweetId)) {
+    clicked.push(tweetId);
+    localStorage.setItem('clickedTweets', JSON.stringify(clicked));
+  }
+  // Update UI
+  const card = document.querySelector(`.tweet-card[data-id="${tweetId}"]`);
+  if (card) {
+    card.classList.add('clicked');
+    const btn = card.querySelector('.btn-post');
+    if (btn) {
+      btn.classList.add('clicked');
+      const originalText = btn.textContent.trim();
+      if (!originalText.includes('✓')) {
+        btn.innerHTML = `✓ ${originalText}`;
+      }
+    }
+  }
+}
+
+function isTweetClicked(tweetId) {
+  return getClickedTweets().includes(tweetId);
+}
+
 // Load tweets on page load
 document.addEventListener('DOMContentLoaded', async () => {
   await loadTweets();
@@ -19,12 +53,15 @@ async function loadTweets() {
 
     container.innerHTML = tweets.map(tweet => {
       const intentUrl = buildIntentUrl(tweet);
+      const isClicked = isTweetClicked(tweet.id);
+      const buttonText = tweet.comment_tweet_url ? 'Reply on X' : 'Post on X';
 
       return `
-        <div class="tweet-card" data-id="${tweet.id}">
+        <div class="tweet-card ${isClicked ? 'clicked' : ''}" data-id="${tweet.id}">
           <div class="tweet-badges">
             ${tweet.category ? `<span class="category">${escapeHtml(tweet.category)}</span>` : ''}
             ${tweet.comment_tweet_url ? `<span class="category reply-badge">Reply</span>` : ''}
+            ${isClicked ? '<span class="category clicked-badge">Posted</span>' : ''}
           </div>
           ${tweet.comment_tweet_url ? `
             <div class="reply-preview">
@@ -35,8 +72,8 @@ async function loadTweets() {
           ` : ''}
           <p class="text">${escapeHtml(tweet.text)}</p>
           <span class="char-count">${tweet.text.length}/280 characters</span>
-          <a href="${intentUrl}" target="_blank" class="btn btn-post">
-            ${tweet.comment_tweet_url ? 'Reply on X' : 'Post on X'}
+          <a href="${intentUrl}" target="_blank" class="btn btn-post ${isClicked ? 'clicked' : ''}" onclick="markTweetAsClicked('${tweet.id}')">
+            ${isClicked ? '✓ ' : ''}${buttonText}
           </a>
         </div>
       `;

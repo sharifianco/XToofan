@@ -180,6 +180,28 @@ main h2 {
   background: #7856ff;
 }
 
+.tweet-card .clicked-badge {
+  background: #00ba7c;
+}
+
+/* Clicked tweet styles */
+.tweet-card.clicked {
+  border-color: #00ba7c;
+  opacity: 0.7;
+}
+
+.tweet-card.clicked:hover {
+  opacity: 1;
+}
+
+.btn-post.clicked {
+  background: #00ba7c;
+}
+
+.btn-post.clicked:hover {
+  background: #00a36c;
+}
+
 .tweet-card .text {
   font-size: 16px;
   line-height: 1.5;
