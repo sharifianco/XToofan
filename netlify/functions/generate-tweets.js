@@ -172,7 +172,7 @@ async function createShortLink(tweet) {
     .from('deep_links')
     .insert([{
       short_code: shortCode,
-      tweet_id: tweet.id,
+      tweet_id: String(tweet.id),
       tweet_text: tweet.text,
       intent_url: intentUrl,
     }])
@@ -181,6 +181,7 @@ async function createShortLink(tweet) {
 
   if (error) {
     console.error('Error creating short link:', error);
+    console.error('Tweet data:', { id: tweet.id, text: tweet.text?.substring(0, 50) });
     return null;
   }
 

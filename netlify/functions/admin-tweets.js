@@ -62,12 +62,12 @@ async function createShortLink(tweet) {
 
   const intentUrl = buildIntentUrl(tweet);
 
-  // Save the deep link
+  // Save the deep link - store tweet_id as string to avoid foreign key issues
   const { data, error } = await supabase
     .from('deep_links')
     .insert([{
       short_code: shortCode,
-      tweet_id: tweet.id,
+      tweet_id: String(tweet.id),
       tweet_text: tweet.text,
       intent_url: intentUrl,
     }])
@@ -76,6 +76,7 @@ async function createShortLink(tweet) {
 
   if (error) {
     console.error('Error creating short link:', error);
+    console.error('Tweet data:', { id: tweet.id, text: tweet.text?.substring(0, 50) });
     return null;
   }
 
@@ -213,23 +214,41 @@ exports.handler = async (event, context) => {
 
       // If action is 'backfill-links', generate links for tweets without short_code
       if (body.action === 'backfill-links') {
-        // Get all tweets without short_code
+        // Get all tweets without short_code (also check for empty string)
         const { data: tweets, error: fetchError } = await supabase
           .from('tweets')
           .select('*')
-          .is('short_code', null);
+          .or('short_code.is.null,short_code.eq.');
 
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+          console.error('Error fetching tweets:', fetchError);
+          throw fetchError;
+        }
+
+        console.log(`Found ${tweets?.length || 0} tweets without short links`);
 
         let generated = 0;
+        const errors = [];
+
         for (const tweet of tweets || []) {
-          const shortCode = await createShortLink(tweet);
-          if (shortCode) {
-            await supabase
-              .from('tweets')
-              .update({ short_code: shortCode })
-              .eq('id', tweet.id);
-            generated++;
+          try {
+            const shortCode = await createShortLink(tweet);
+            if (shortCode) {
+              const { error: updateError } = await supabase
+                .from('tweets')
+                .update({ short_code: shortCode })
+                .eq('id', tweet.id);
+
+              if (updateError) {
+                console.error(`Error updating tweet ${tweet.id}:`, updateError);
+                errors.push({ tweet_id: tweet.id, error: updateError.message });
+              } else {
+                generated++;
+              }
+            }
+          } catch (err) {
+            console.error(`Error processing tweet ${tweet.id}:`, err);
+            errors.push({ tweet_id: tweet.id, error: err.message });
           }
         }
 
@@ -241,6 +260,7 @@ exports.handler = async (event, context) => {
             message: `Generated ${generated} short links for ${tweets?.length || 0} tweets without links`,
             generated,
             total: tweets?.length || 0,
+            errors: errors.length > 0 ? errors : undefined,
           }),
         };
       }
