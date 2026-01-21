@@ -19,3 +19,22 @@
 # Scheduled function to generate 10 tweets daily at 8:00 AM UTC
 [functions."scheduled-generate"]
   schedule = "0 8 * * *"
+
+# Cache control headers for static assets
+# HTML files - always revalidate to pick up new versions
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# CSS files - long cache with version query params
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# JS files - long cache with version query params
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
