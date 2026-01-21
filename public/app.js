@@ -81,9 +81,14 @@ async function loadTweets() {
           ` : ''}
           <p class="text">${escapeHtml(tweet.text)}</p>
           <span class="char-count">${tweet.text.length}/280 characters</span>
-          <a href="${intentUrl}" target="_blank" class="btn btn-post ${isClicked ? 'clicked' : ''}" onclick="markTweetAsClicked('${tweet.id}')">
-            ${isClicked ? '✓ ' : ''}${buttonText}
-          </a>
+          <div class="tweet-actions">
+            <a href="${intentUrl}" target="_blank" class="btn btn-post ${isClicked ? 'clicked' : ''}" onclick="markTweetAsClicked('${tweet.id}')">
+              ${isClicked ? '✓ ' : ''}${buttonText}
+            </a>
+            <button class="btn btn-instagram" onclick="copyInstagramDeepLink('${encodeURIComponent(intentUrl)}')">
+              Copy for Instagram Story
+            </button>
+          </div>
         </div>
       `;
     }).join('');
@@ -138,4 +143,76 @@ function formatDate(dateString) {
     hour: '2-digit',
     minute: '2-digit'
   });
+}
+
+// Generate Instagram deep link for sharing X intent URL in Stories
+function generateInstagramDeepLink(xIntentUrl) {
+  // The X intent URL to share via Instagram Story
+  const encodedUrl = encodeURIComponent(xIntentUrl);
+
+  // Instagram Stories deep link with sticker URL
+  // This will open Instagram Stories with a link sticker
+  return {
+    ios: `instagram-stories://share?source_application=xtoofan&content_url=${encodedUrl}`,
+    android: `intent://share?source_application=xtoofan&content_url=${encodedUrl}#Intent;package=com.instagram.android;scheme=instagram-stories;end`,
+    fallback: xIntentUrl
+  };
+}
+
+// Copy Instagram deep link to clipboard
+async function copyInstagramDeepLink(encodedIntentUrl) {
+  const intentUrl = decodeURIComponent(encodedIntentUrl);
+  const deepLinks = generateInstagramDeepLink(intentUrl);
+
+  // Detect platform
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isAndroid = /Android/.test(navigator.userAgent);
+
+  // Create a formatted text with all links
+  const copyText = `🔗 Share this tweet on Instagram Story:
+
+📱 iOS Deep Link:
+${deepLinks.ios}
+
+🤖 Android Deep Link:
+${deepLinks.android}
+
+🌐 Direct X Link (fallback):
+${deepLinks.fallback}
+
+---
+JSON Format:
+${JSON.stringify(deepLinks, null, 2)}`;
+
+  try {
+    await navigator.clipboard.writeText(copyText);
+    showToast('Deep links copied to clipboard!', 'success');
+  } catch (err) {
+    // Fallback for older browsers
+    const textarea = document.createElement('textarea');
+    textarea.value = copyText;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    showToast('Deep links copied to clipboard!', 'success');
+  }
+}
+
+// Try to open Instagram Stories directly (works on mobile)
+function openInstagramStory(encodedIntentUrl) {
+  const intentUrl = decodeURIComponent(encodedIntentUrl);
+  const deepLinks = generateInstagramDeepLink(intentUrl);
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isAndroid = /Android/.test(navigator.userAgent);
+
+  if (isIOS) {
+    window.location.href = deepLinks.ios;
+  } else if (isAndroid) {
+    window.location.href = deepLinks.android;
+  } else {
+    // Desktop - copy to clipboard instead
+    copyInstagramDeepLink(encodedIntentUrl);
+  }
 }

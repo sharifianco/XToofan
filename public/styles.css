@@ -109,6 +109,42 @@ body {
   cursor: not-allowed;
 }
 
+/* Tweet actions container */
+.tweet-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.tweet-actions .btn {
+  margin-top: 0;
+  flex: 1;
+  min-width: 140px;
+}
+
+/* Instagram button */
+.btn-instagram {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 9999px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 15px;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.btn-instagram:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
+.btn-instagram:active {
+  transform: scale(0.98);
+}
+
 /* Header */
 header {
   border-bottom: 1px solid #38444d;
