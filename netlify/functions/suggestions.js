@@ -9,6 +9,78 @@ const supabase = createClient(
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET;
 const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY;
 
+// Generate a short random code
+function generateShortCode(length = 6) {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+// Build X intent URL for tweet
+function buildIntentUrl(tweet) {
+  const baseUrl = 'https://twitter.com/intent/tweet';
+  const params = new URLSearchParams();
+  params.set('text', tweet.text);
+
+  if (tweet.comment_tweet_url) {
+    const match = tweet.comment_tweet_url.match(/status\/(\d+)/);
+    if (match) {
+      params.set('in_reply_to', match[1]);
+    }
+  }
+
+  return `${baseUrl}?${params.toString()}`;
+}
+
+// Create short link for a tweet
+async function createShortLink(tweet) {
+  let shortCode;
+  let isUnique = false;
+  let attempts = 0;
+
+  while (!isUnique && attempts < 10) {
+    shortCode = generateShortCode();
+    const { data: check } = await supabase
+      .from('deep_links')
+      .select('id')
+      .eq('short_code', shortCode)
+      .single();
+
+    if (!check) {
+      isUnique = true;
+    }
+    attempts++;
+  }
+
+  if (!isUnique) {
+    console.error('Failed to generate unique short code');
+    return null;
+  }
+
+  const intentUrl = buildIntentUrl(tweet);
+
+  const { data, error } = await supabase
+    .from('deep_links')
+    .insert([{
+      short_code: shortCode,
+      tweet_id: String(tweet.id),
+      tweet_text: tweet.text,
+      intent_url: intentUrl,
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating short link:', error);
+    return null;
+  }
+
+  return shortCode;
+}
+
 async function verifyTurnstile(token) {
   if (!TURNSTILE_SECRET) {
     // Skip verification if no secret key configured
@@ -138,15 +210,28 @@ exports.handler = async (event, context) => {
         if (fetchError) throw fetchError;
 
         // Create the tweet
-        const { error: tweetError } = await supabase
+        const { data: newTweet, error: tweetError } = await supabase
           .from('tweets')
           .insert([{
             text: suggestion.text,
             comment_tweet_url: suggestion.reply_url,
             active: true
-          }]);
+          }])
+          .select()
+          .single();
 
         if (tweetError) throw tweetError;
+
+        // Generate short link for the new tweet
+        if (newTweet) {
+          const shortCode = await createShortLink(newTweet);
+          if (shortCode) {
+            await supabase
+              .from('tweets')
+              .update({ short_code: shortCode })
+              .eq('id', newTweet.id);
+          }
+        }
 
         // Update suggestion status to published
         const { data, error } = await supabase
