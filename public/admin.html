@@ -295,6 +295,71 @@
     .btn-success:hover {
       background: #00a36c;
     }
+
+    .form-select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #38444d;
+      border-radius: 8px;
+      background: #15202b;
+      color: #e7e9ea;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .form-select:focus {
+      outline: none;
+      border-color: #1d9bf0;
+    }
+
+    .form-group input[type="checkbox"] {
+      width: auto;
+      margin-right: 8px;
+    }
+
+    .form-group label:has(input[type="checkbox"]) {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    #generate-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .generated-tweet-card {
+      background: #15202b;
+      border: 1px solid #38444d;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .generated-tweet-card .tweet-text {
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .generated-tweet-card .char-info {
+      font-size: 12px;
+      color: #8b98a5;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -324,6 +389,7 @@
       <div class="tabs">
         <button class="tab-btn active" onclick="showTab('tweets')">Tweets</button>
         <button class="tab-btn" onclick="showTab('suggestions')">Suggestions</button>
+        <button class="tab-btn" onclick="showTab('ai-generate')">AI Generate</button>
       </div>
 
       <!-- Tweets Tab -->
@@ -365,6 +431,59 @@
           <h3>User Suggestions</h3>
           <div id="suggestions-list" class="tweet-list">
             <p class="loading">Loading suggestions...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Generate Tab -->
+      <div id="ai-generate-tab" class="tab-content">
+        <div class="form-section">
+          <h3>Generate Tweets with AI (Gemini)</h3>
+          <form id="generate-form">
+            <div class="form-group">
+              <label for="generate-count">Number of Tweets</label>
+              <select id="generate-count" class="form-select">
+                <option value="5">5 tweets</option>
+                <option value="10" selected>10 tweets</option>
+                <option value="15">15 tweets</option>
+                <option value="20">20 tweets</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="generate-persona">Writing Style</label>
+              <select id="generate-persona" class="form-select">
+                <option value="advocate">Human Rights Advocate - Urgent & Compassionate</option>
+                <option value="journalist">Breaking News Journalist - Objective & Firm</option>
+                <option value="storyteller">Emotional Storyteller - Poetic & Moving</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="generate-topic">Today's Focus Topic (optional)</label>
+              <input type="text" id="generate-topic" placeholder="e.g., Internet blackout, Protests in Tehran, Political prisoners">
+            </div>
+            <div class="form-group">
+              <label for="generate-category">Category for Generated Tweets</label>
+              <input type="text" id="generate-category" value="AI Generated" placeholder="Category name">
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="generate-autosave" checked>
+                Auto-save to database (uncheck to preview first)
+              </label>
+            </div>
+            <button type="submit" class="btn btn-primary" id="generate-btn">
+              Generate Tweets
+            </button>
+          </form>
+        </div>
+
+        <!-- Generated Tweets Preview -->
+        <div id="generated-preview" class="form-section hidden">
+          <h3>Generated Tweets</h3>
+          <div id="generated-list" class="tweet-list"></div>
+          <div class="modal-actions" id="preview-actions" style="margin-top: 16px;">
+            <button type="button" class="btn btn-secondary" onclick="clearPreview()">Clear</button>
+            <button type="button" class="btn btn-success" onclick="saveGeneratedTweets()">Save All to Database</button>
           </div>
         </div>
       </div>

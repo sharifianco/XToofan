@@ -9,3 +9,7 @@
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
+
+# Scheduled function to generate 10 tweets daily at 8:00 AM UTC
+[functions."scheduled-generate"]
+  schedule = "0 8 * * *"

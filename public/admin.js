@@ -325,6 +325,121 @@ function showTab(tab) {
   }
 }
 
+// AI Tweet Generation
+let generatedTweetsCache = [];
+
+document.getElementById('generate-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const btn = document.getElementById('generate-btn');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Generating...';
+
+  const count = parseInt(document.getElementById('generate-count').value);
+  const persona = document.getElementById('generate-persona').value;
+  const topic = document.getElementById('generate-topic').value.trim();
+  const category = document.getElementById('generate-category').value.trim();
+  const autoSave = document.getElementById('generate-autosave').checked;
+
+  try {
+    const res = await fetch('/api/generate-tweets', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        count,
+        persona,
+        topic: topic || null,
+        category: category || 'AI Generated',
+        autoSave
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      if (autoSave) {
+        showToast(`${data.saved} tweets generated and saved!`, 'success');
+        loadTweets();
+        showGeneratedPreview(data.tweets, true);
+      } else {
+        generatedTweetsCache = data.tweets;
+        showGeneratedPreview(data.tweets, false);
+        showToast(`${data.generated} tweets generated. Review and save below.`, 'success');
+      }
+    } else {
+      showToast(data.error || 'Failed to generate tweets', 'error');
+    }
+  } catch (error) {
+    console.error('Generate error:', error);
+    showToast('Failed to generate tweets', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+});
+
+function showGeneratedPreview(tweets, isSaved) {
+  const previewSection = document.getElementById('generated-preview');
+  const listContainer = document.getElementById('generated-list');
+  const actionsContainer = document.getElementById('preview-actions');
+
+  listContainer.innerHTML = tweets.map((tweet, index) => {
+    const text = tweet.text || tweet;
+    return `
+      <div class="generated-tweet-card">
+        <p class="tweet-text">${escapeHtml(text)}</p>
+        <span class="char-info">${text.length}/280 characters</span>
+      </div>
+    `;
+  }).join('');
+
+  // Hide save button if already saved
+  actionsContainer.style.display = isSaved ? 'none' : 'flex';
+  previewSection.classList.remove('hidden');
+}
+
+function clearPreview() {
+  document.getElementById('generated-preview').classList.add('hidden');
+  document.getElementById('generated-list').innerHTML = '';
+  generatedTweetsCache = [];
+}
+
+async function saveGeneratedTweets() {
+  if (generatedTweetsCache.length === 0) {
+    showToast('No tweets to save', 'error');
+    return;
+  }
+
+  const category = document.getElementById('generate-category').value.trim() || 'AI Generated';
+  let savedCount = 0;
+
+  for (const tweet of generatedTweetsCache) {
+    const text = tweet.text || tweet;
+    try {
+      const res = await fetch('/api/admin-tweets', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          text,
+          category,
+          comment_tweet_url: null
+        })
+      });
+
+      if (res.ok) {
+        savedCount++;
+      }
+    } catch (error) {
+      console.error('Error saving tweet:', error);
+    }
+  }
+
+  showToast(`${savedCount} tweets saved to database!`, 'success');
+  loadTweets();
+  clearPreview();
+}
+
 // Load suggestions
 async function loadSuggestions() {
   const container = document.getElementById('suggestions-list');
