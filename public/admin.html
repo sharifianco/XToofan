@@ -418,7 +418,12 @@
 
         <!-- Tweet List -->
         <div class="form-section">
-          <h3>Manage Tweets</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin-bottom: 0;">Manage Tweets</h3>
+            <button onclick="backfillShortLinks()" class="btn btn-secondary btn-sm" id="backfill-btn">
+              🔗 Generate Missing Short Links
+            </button>
+          </div>
           <div id="tweet-list" class="tweet-list">
             <p class="loading">Loading tweets...</p>
           </div>

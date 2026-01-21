@@ -207,6 +207,51 @@ exports.handler = async (event, context) => {
       };
     }
 
+    // PATCH - Backfill short links for existing tweets
+    if (event.httpMethod === 'PATCH') {
+      const body = JSON.parse(event.body || '{}');
+
+      // If action is 'backfill-links', generate links for tweets without short_code
+      if (body.action === 'backfill-links') {
+        // Get all tweets without short_code
+        const { data: tweets, error: fetchError } = await supabase
+          .from('tweets')
+          .select('*')
+          .is('short_code', null);
+
+        if (fetchError) throw fetchError;
+
+        let generated = 0;
+        for (const tweet of tweets || []) {
+          const shortCode = await createShortLink(tweet);
+          if (shortCode) {
+            await supabase
+              .from('tweets')
+              .update({ short_code: shortCode })
+              .eq('id', tweet.id);
+            generated++;
+          }
+        }
+
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            success: true,
+            message: `Generated ${generated} short links for ${tweets?.length || 0} tweets without links`,
+            generated,
+            total: tweets?.length || 0,
+          }),
+        };
+      }
+
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Invalid action' }),
+      };
+    }
+
     return {
       statusCode: 405,
       headers,

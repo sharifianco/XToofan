@@ -545,3 +545,34 @@ async function deleteSuggestion(id) {
     showToast('Failed to delete suggestion', 'error');
   }
 }
+
+// Backfill short links for existing tweets
+async function backfillShortLinks() {
+  const btn = document.getElementById('backfill-btn');
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Generating...';
+
+  try {
+    const res = await fetch('/api/admin-tweets', {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ action: 'backfill-links' })
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      loadTweets();
+    } else {
+      showToast(data.error || 'Failed to generate short links', 'error');
+    }
+  } catch (error) {
+    console.error('Backfill error:', error);
+    showToast('Failed to generate short links', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+  }
+}
