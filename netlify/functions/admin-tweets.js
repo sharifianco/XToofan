@@ -216,9 +216,13 @@ exports.handler = async (event, context) => {
     if (event.httpMethod === 'PATCH') {
       const body = JSON.parse(event.body || '{}');
 
-      // If action is 'backfill-links', generate links for tweets without short_code
+      // If action is 'backfill-links', generate links for tweets without short_code AND update existing deep_links
       if (body.action === 'backfill-links') {
-        // Get all tweets without short_code (also check for empty string)
+        let generated = 0;
+        let updated = 0;
+        const errors = [];
+
+        // PART 1: Generate short links for tweets without short_code
         const { data: tweets, error: fetchError } = await supabase
           .from('tweets')
           .select('*')
@@ -230,9 +234,6 @@ exports.handler = async (event, context) => {
         }
 
         console.log(`Found ${tweets?.length || 0} tweets without short links`);
-
-        let generated = 0;
-        const errors = [];
 
         for (const tweet of tweets || []) {
           try {
@@ -256,14 +257,60 @@ exports.handler = async (event, context) => {
           }
         }
 
+        // PART 2: Update intent_url for existing deep_links (keep same short_code)
+        const { data: existingLinks, error: linksError } = await supabase
+          .from('deep_links')
+          .select('*');
+
+        if (linksError) {
+          console.error('Error fetching deep_links:', linksError);
+        } else {
+          console.log(`Found ${existingLinks?.length || 0} existing deep_links to update`);
+
+          for (const link of existingLinks || []) {
+            try {
+              // Get the tweet to rebuild the intent_url
+              const { data: tweet } = await supabase
+                .from('tweets')
+                .select('*')
+                .eq('id', link.tweet_id)
+                .single();
+
+              if (tweet) {
+                const newIntentUrl = buildIntentUrl(tweet);
+
+                const { error: updateLinkError } = await supabase
+                  .from('deep_links')
+                  .update({
+                    intent_url: newIntentUrl,
+                    tweet_text: tweet.text // Also update tweet_text in case it changed
+                  })
+                  .eq('id', link.id);
+
+                if (updateLinkError) {
+                  console.error(`Error updating deep_link ${link.id}:`, updateLinkError);
+                  errors.push({ link_id: link.id, error: updateLinkError.message });
+                } else {
+                  updated++;
+                }
+              }
+            } catch (err) {
+              console.error(`Error updating deep_link ${link.id}:`, err);
+              errors.push({ link_id: link.id, error: err.message });
+            }
+          }
+        }
+
         return {
           statusCode: 200,
           headers,
           body: JSON.stringify({
             success: true,
-            message: `Generated ${generated} short links for ${tweets?.length || 0} tweets without links`,
+            message: `Generated ${generated} new short links, updated ${updated} existing deep_links`,
             generated,
-            total: tweets?.length || 0,
+            updated,
+            total_tweets: tweets?.length || 0,
+            total_links: existingLinks?.length || 0,
             errors: errors.length > 0 ? errors : undefined,
           }),
         };
