@@ -173,44 +173,38 @@
         if (!res.ok) throw new Error('Not found');
 
         const data = await res.json();
-        const intentUrl = data.intent_url;
+        const deepLinks = data.deep_links;
 
         updateStatus('در حال باز کردن...');
 
-        // Show manual link as fallback
-        showManualLink(intentUrl);
+        // Show manual link as fallback (use web fallback URL)
+        showManualLink(deepLinks.fallback);
 
         // Determine redirect URL based on device
-        let redirectUrl;
-
         if (isIOS) {
-          // iOS: Try to open Twitter/X app first, then fallback to web
-          // Using x.com URL scheme for iOS
-          const xAppUrl = intentUrl.replace('https://twitter.com', 'twitter://').replace('https://x.com', 'twitter://');
-
-          // Try app first
-          window.location.href = xAppUrl;
+          // iOS: Try to open Twitter/X app first
+          window.location.href = deepLinks.ios;
 
           // Fallback to web after delay
           setTimeout(() => {
-            window.location.href = intentUrl;
+            window.location.href = deepLinks.fallback;
           }, 1500);
 
         } else if (isAndroid) {
-          // Android: Use intent URL for Twitter/X app
-          const tweetText = new URL(intentUrl).searchParams.get('text') || '';
-          const intentUri = `intent://post?message=${encodeURIComponent(tweetText)}#Intent;scheme=twitter;package=com.twitter.android;S.browser_fallback_url=${encodeURIComponent(intentUrl)};end`;
+          // Android: Use the native app URL with fallback
+          const fallbackEncoded = encodeURIComponent(deepLinks.fallback);
+          const intentUri = `intent://post#Intent;scheme=twitter;package=com.twitter.android;S.browser_fallback_url=${fallbackEncoded};end`;
 
           window.location.href = intentUri;
 
           // Fallback to web after delay
           setTimeout(() => {
-            window.location.href = intentUrl;
+            window.location.href = deepLinks.fallback;
           }, 1500);
 
         } else {
-          // Desktop: Direct redirect to Twitter intent
-          window.location.href = intentUrl;
+          // Desktop: Direct redirect to web intent
+          window.location.href = deepLinks.fallback;
         }
 
       } catch (error) {
