@@ -143,21 +143,25 @@ exports.handler = async (event) => {
         .update({ clicks: (data.clicks || 0) + 1 })
         .eq('id', data.id);
 
-      // Generate platform-specific deep links
-      const intentUrl = data.intent_url;
-      const encodedUrl = encodeURIComponent(intentUrl);
-
-      const deepLinks = {
-        ios: {
-          instagram_story: `instagram-stories://share?source_application=xtoofan&content_url=${encodedUrl}`,
-          twitter: intentUrl.replace('twitter.com', 'x.com'),
-        },
-        android: {
-          instagram_story: `intent://share?source_application=xtoofan&content_url=${encodedUrl}#Intent;package=com.instagram.android;scheme=instagram-stories;end`,
-          twitter: intentUrl.replace('twitter.com', 'x.com'),
-        },
-        fallback: intentUrl,
-      };
+      // Parse intent_url - could be JSON string (new format) or plain URL (old format)
+      let deepLinks;
+      try {
+        const parsedIntent = JSON.parse(data.intent_url);
+        // New format: { ios, android, fallback }
+        deepLinks = {
+          ios: parsedIntent.ios,
+          android: parsedIntent.android,
+          fallback: parsedIntent.fallback,
+        };
+      } catch {
+        // Old format: plain URL string
+        const intentUrl = data.intent_url;
+        deepLinks = {
+          ios: intentUrl.replace('twitter.com/intent/tweet', 'x.com/intent/post').replace('text=', 'text='),
+          android: intentUrl.replace('twitter.com/intent/tweet', 'x.com/intent/post'),
+          fallback: intentUrl.replace('twitter.com', 'x.com'),
+        };
+      }
 
       return {
         statusCode: 200,
