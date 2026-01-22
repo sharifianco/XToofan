@@ -133,12 +133,15 @@ function generateShortCode(length = 6) {
   return result;
 }
 
-// Build X intent URL for tweet
+// Build X intent URLs for tweet (iOS, Android, fallback)
 function buildIntentUrl(tweet) {
-  const baseUrl = 'https://twitter.com/intent/tweet';
-  const params = new URLSearchParams();
-  params.set('text', tweet.text);
-  return `${baseUrl}?${params.toString()}`;
+  const encodedText = encodeURIComponent(tweet.text);
+
+  return JSON.stringify({
+    ios: `twitter://post?message=${encodedText}`,
+    android: `twitter://post?message=${encodedText}`,
+    fallback: `https://x.com/intent/post?text=${encodedText}`
+  });
 }
 
 // Create short link for a tweet

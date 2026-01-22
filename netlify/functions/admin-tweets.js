@@ -18,20 +18,24 @@ function generateShortCode(length = 6) {
   return result;
 }
 
-// Build X intent URL for tweet
+// Build X intent URLs for tweet (iOS, Android, fallback)
 function buildIntentUrl(tweet) {
-  const baseUrl = 'https://twitter.com/intent/tweet';
-  const params = new URLSearchParams();
-  params.set('text', tweet.text);
+  const encodedText = encodeURIComponent(tweet.text);
 
+  // Handle reply if comment_tweet_url exists
+  let replyParam = '';
   if (tweet.comment_tweet_url) {
     const match = tweet.comment_tweet_url.match(/status\/(\d+)/);
     if (match) {
-      params.set('in_reply_to', match[1]);
+      replyParam = `&in_reply_to=${match[1]}`;
     }
   }
 
-  return `${baseUrl}?${params.toString()}`;
+  return JSON.stringify({
+    ios: `twitter://post?message=${encodedText}${replyParam}`,
+    android: `twitter://post?message=${encodedText}${replyParam}`,
+    fallback: `https://x.com/intent/post?text=${encodedText}${replyParam}`
+  });
 }
 
 // Create short link for a tweet
