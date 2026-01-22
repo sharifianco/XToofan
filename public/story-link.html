@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ساخت لینک برای استوری - توفان توییتری</title>
+  <link rel="stylesheet" href="styles.css?v=1.0.1">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <style>
+    .story-container {
+      max-width: 600px;
+    }
+    .back-link {
+      color: #1d9bf0;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    .form-section {
+      background: #192734;
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid #38444d;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #8b98a5;
+      font-size: 14px;
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #38444d;
+      border-radius: 8px;
+      background: #15202b;
+      color: #e7e9ea;
+      font-size: 16px;
+      font-family: inherit;
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #1d9bf0;
+    }
+    .char-counter {
+      text-align: left;
+      font-size: 13px;
+      color: #8b98a5;
+      margin-top: 4px;
+    }
+    .char-counter.warning {
+      color: #f4212e;
+    }
+    .result-section {
+      background: #192734;
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid #38444d;
+      margin-top: 24px;
+    }
+    .result-section.hidden {
+      display: none;
+    }
+    .result-section h3 {
+      color: #e7e9ea;
+      margin-bottom: 16px;
+      font-size: 18px;
+    }
+    .link-box {
+      background: #15202b;
+      border: 1px solid #38444d;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .link-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #1d9bf0;
+      font-size: 16px;
+      outline: none;
+    }
+    .copy-btn {
+      background: #1d9bf0;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 9999px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .copy-btn:hover {
+      background: #1a8cd8;
+    }
+    .copy-btn.copied {
+      background: #00ba7c;
+    }
+    .info-text {
+      color: #8b98a5;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .turnstile-wrapper {
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .cf-turnstile {
+      margin: 0 auto;
+    }
+    .generate-btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+    }
+    .generate-btn:disabled {
+      background: #536471;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container story-container">
+    <a href="index.html" class="back-link">← بازگشت به صفحه اصلی</a>
+
+    <header>
+      <div class="header-content">
+        <h1>ساخت لینک برای استوری</h1>
+        <p class="subtitle">لینک مخصوص اینستاگرام استوری بسازید و در استوری خود بگذارید</p>
+      </div>
+    </header>
+
+    <main>
+      <div class="form-section">
+        <form id="generate-form">
+          <div class="form-group">
+            <label for="tweet-text">متن توییت *</label>
+            <textarea id="tweet-text" placeholder="متن توییت خود را بنویسید..." maxlength="280" required></textarea>
+            <div id="char-counter" class="char-counter">0/280</div>
+          </div>
+          <div class="form-group">
+            <label for="reply-url">لینک توییت برای ریپلای (اختیاری)</label>
+            <input type="url" id="reply-url" placeholder="https://x.com/user/status/1234567890">
+            <small style="color: #8b98a5;">اگر این توییت قرار است به توییت دیگری ریپلای شود، لینک آن را وارد کنید</small>
+          </div>
+          <!-- Cloudflare Turnstile -->
+          <div class="turnstile-wrapper">
+            <div class="cf-turnstile" data-sitekey="0x4AAAAAACNxuz04qoJI4_tX" data-theme="dark" data-callback="onTurnstileSuccess"></div>
+          </div>
+          <button type="submit" class="btn btn-primary generate-btn" id="generate-btn" disabled>
+            ساخت لینک استوری
+          </button>
+        </form>
+      </div>
+
+      <div id="result-section" class="result-section hidden">
+        <h3>لینک استوری شما آماده است!</h3>
+        <div class="link-box">
+          <input type="text" id="short-link" readonly>
+          <button type="button" class="copy-btn" onclick="copyLink()">کپی لینک</button>
+        </div>
+        <p class="info-text">
+          این لینک را در استوری اینستاگرام خود قرار دهید. وقتی کاربران روی آن کلیک کنند، مستقیما به اپلیکیشن X/Twitter منتقل می‌شوند و توییت آماده ارسال خواهد بود.
+        </p>
+      </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script>
+    let turnstileToken = null;
+
+    // Turnstile callback
+    function onTurnstileSuccess(token) {
+      turnstileToken = token;
+      document.getElementById('generate-btn').disabled = false;
+    }
+
+    // Character counter
+    const textarea = document.getElementById('tweet-text');
+    const counter = document.getElementById('char-counter');
+
+    textarea.addEventListener('input', () => {
+      const len = textarea.value.length;
+      counter.textContent = `${len}/280`;
+      counter.classList.toggle('warning', len > 260);
+    });
+
+    // Form submission
+    document.getElementById('generate-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!turnstileToken) {
+        showToast('لطفا تایید کنید که ربات نیستید', 'error');
+        return;
+      }
+
+      const text = document.getElementById('tweet-text').value.trim();
+      const reply_url = document.getElementById('reply-url').value.trim();
+
+      const btn = document.getElementById('generate-btn');
+      btn.disabled = true;
+      btn.textContent = 'در حال ساخت...';
+
+      try {
+        const res = await fetch('/api/story-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text,
+            reply_url: reply_url || null,
+            turnstile_token: turnstileToken
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.short_url) {
+          // Show result
+          document.getElementById('short-link').value = data.short_url;
+          document.getElementById('result-section').classList.remove('hidden');
+          showToast('لینک با موفقیت ساخته شد!', 'success');
+        } else {
+          showToast(data.error || 'خطا در ساخت لینک', 'error');
+        }
+      } catch (error) {
+        showToast('خطا در ساخت لینک', 'error');
+      } finally {
+        // Reset Turnstile
+        turnstile.reset();
+        turnstileToken = null;
+        btn.disabled = true;
+        btn.textContent = 'ساخت لینک استوری';
+      }
+    });
+
+    function copyLink() {
+      const input = document.getElementById('short-link');
+      const btn = document.querySelector('.copy-btn');
+
+      navigator.clipboard.writeText(input.value).then(() => {
+        btn.textContent = 'کپی شد!';
+        btn.classList.add('copied');
+        showToast('لینک کپی شد!', 'success');
+
+        setTimeout(() => {
+          btn.textContent = 'کپی لینک';
+          btn.classList.remove('copied');
+        }, 2000);
+      }).catch(() => {
+        // Fallback
+        input.select();
+        document.execCommand('copy');
+        btn.textContent = 'کپی شد!';
+        btn.classList.add('copied');
+        showToast('لینک کپی شد!', 'success');
+
+        setTimeout(() => {
+          btn.textContent = 'کپی لینک';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    function showToast(message, type) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type} show`;
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
