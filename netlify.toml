@@ -16,9 +16,9 @@
   to = "/l/index.html"
   status = 200
 
-# Scheduled function to generate 10 tweets daily at 8:00 AM UTC
-[functions."scheduled-generate"]
-  schedule = "0 8 * * *"
+# Scheduled function to generate 10 tweets daily at 8:00 AM UTC (disabled)
+# [functions."scheduled-generate"]
+#   schedule = "0 8 * * *"
 
 # Cache control headers for static assets
 # HTML files - always revalidate to pick up new versions
